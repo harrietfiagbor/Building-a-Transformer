@@ -1,0 +1,5 @@
+torch
+transformerlens
+einops
+jaxtyping
+git+https://github.com/callummcdougall/CircuitsVis.git#subdirectory=python
