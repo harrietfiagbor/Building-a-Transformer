@@ -36,12 +36,26 @@ class PosEmbed(nn.Module):
     def __init__(self, cfg: Config):
         super().__init__()
         self.cfg = cfg
-        self.W_pos = nn.Parameter(t.empty((cfg.n_ctx, cfg.d_model)))
+        self.W_pos = nn.Parameter(t.empty((self.cfg.n_ctx, self.cfg.d_model)))
         nn.init.normal_(self.W_pos, std=self.cfg.init_range)
 
     def forward(self, tokens: Int[Tensor, "batch seqence"]) -> Float[Tensor, "batch sequence d_model"]:
          batch, seq_len =  tokens.shape
          return einops.repeat(self.W_pos[:seq_len], "seq d_model -> batch seq d_model", batch=batch)
+    
+class apply_causal_mask():
+     def __init__(self, cfg: Config):
+          super().__init__()
+          self.cfg = cfg
+          self.register_buffer("IGNORE", t.tensor(float("-inf"), dtype=t.float32, device=self.cfg.device))
+
+     def forward(self, attn_scores: Float[Tensor, "batch n_heads query_pos key_pos"]) -> Float[Tensor, "batch n_heads query_pos key_pos"]:
+          _, _, query_pos, key_pos = attn_scores.shape()
+          pre_mask = ((query_pos, key_pos), device= self.cfg.device)
+          mask = t.triu(pre_mask, diagonal=0).bool()
+          return attn_scores.masked_fill_(mask, self.IGNORE)
+     
+        
     
 
 
