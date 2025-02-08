@@ -162,6 +162,23 @@ class Unembed(nn.Module):
         ) + self. b_U
     
 
+class DemoTransformer(nn.Module):
+    def __init__(self, cfg: Config):
+        super().__init__()
+        self.cfg = cfg
+        self.embed = Embed(cfg)
+        self.pos_embed = PosEmbed(cfg)
+        self.blocks = nn.ModuleList([TransformerBlock(cfg) for _ in range(cfg.n_layers)])
+        self.ln_final = LayerNorm(cfg)
+        self.unembed = Unembed(cfg)
+
+    def forward(self, tokens: Int[Tensor, "batch position"]) -> Float[Tensor, "batch position d_vocab"]:
+        residual = self.embed(tokens) + self.pos_embed(tokens)
+        for block in self.blocks:
+            residual = block(residual)
+        residual = self.ln_final(residual)
+        logits = self.unembed(residual)
+        return logits
 
 
     
