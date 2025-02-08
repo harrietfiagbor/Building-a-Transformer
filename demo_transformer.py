@@ -6,7 +6,7 @@ from jaxtyping import Float, Int
 from utils import Config
 import einops
 
-from transformer_lens.utils import gelu_new, tokenize_and_concatenate
+from transformer_lens.utils import gelu_new
 
 class LayerNorm(nn.Module):
     def __init__(self, cfg: Config):
@@ -119,9 +119,33 @@ class MLP(nn.Module):
             einops.einsum([post, self.W_out], "batch posn d_model, d_mlp d_model -> batch posn d_model")
             ) + self.b_out
         return mlp_out
-     
-        
     
+
+class TransformerBlock(nn.Module):
+    def __init__(self, cfg: Config):
+        super().__init__()
+        self.cfg = cfg
+        self.ln1 = LayerNorm(cfg)
+        self.attn = Attention(cfg)
+        self.ln2 = LayerNorm(cfg)
+        self.mlp = MLP(cfg)
+
+    def forward(self, resid_pre: Float[Tensor, "batch position d_model"]) -> Float[Tensor, "batch position d_model"]:
+        # LayerNorm 1
+        ln1_out = self.ln1(resid_pre)
+        # Attention
+        attn_out = self.attn(ln1_out)
+        # Residual connection 1
+        resid_mid =  attn_out + resid_pre
+        # LayerNorm 2
+        ln2_out = self.ln2(resid_mid)
+        # MLP
+        mlp_out = self.mlp(ln2_out)
+        # Residual connection 2
+        resid_post = mlp_out + resid_mid
+        return resid_post
+
+
 
 
     
