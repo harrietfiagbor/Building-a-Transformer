@@ -69,8 +69,21 @@ class Attention(nn.Module):
         ## obtain q, k, v vectors through linear transformation y = x @ W + b
         q  = (einops.einsum([normalized_resid_pre, self.W_Q], "batch seq d_model, n_heads d_model d_head -> batch seq n_heads d_head")) + self.b_Q
         k = (einops.einsum([normalized_resid_pre, self.W_K], "batch seq d_model, n_heads d_model d_head -> batch seq n_heads d_head")) + self.b_K
-        v = (einops.einsum([normalized_resid_pre, self.W_V], "batch seq d_model, n_heads d_model d_head -> batch seq n_heads d_head")) + self.b_v
+        v = (einops.einsum([normalized_resid_pre, self.W_V], "batch seq d_model, n_heads d_model d_head -> batch seq n_heads d_head")) + self.b_V
+        # get attention scores by applying dot product over head dim
+        attn_scores = einops.einsum([q, k], "batch query_pos n_head d_head, batch key_pos n_head d_head -> batch n_head query_pos key_pos")
+        # scale to counter numerical instability
+        attn_scores_scaled = attn_scores/t.sqrt(self.cfg.d_head)
+        # mask future key positions
+        attn_scores_masked = self.apply_causal_mask(attn_scores=attn_scores_scaled)
+        # apply softmax to give probs
+        attn_pattern = F.softmax(attn_scores_masked, dim=-1)
+        # weigted sum of value vectors
+        z = einops.einsum([attn_pattern, v], "batch n_heads query_pos key_pos, batch key_pos n_heads d_head -> batch query_pos n_heads d_head")
 
+        attn_out = (einops.einsum([z, self.W_O], "batch query_pos n_head d_head, n_heads d_head d_model -> batch, query_pos d_model")) + self.b_O
+
+        return attn_out
 
     def apply_causal_mask(
         self, attn_scores: Float[Tensor, "batch n_heads query_pos key_pos"]
