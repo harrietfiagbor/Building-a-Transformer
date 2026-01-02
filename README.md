@@ -1,9 +1,5 @@
 # Clean Transformer Implementation
 
-Type: Study
-Reviewed?: Not started
-Topics: Mechanistic Interpretability (https://www.notion.so/Mechanistic-Interpretability-1c1151d4acc880bdb0a9fe6f6550f69f?pvs=21)
-Related Notes: Transformers: Tokenization (https://www.notion.so/Transformers-Tokenization-18d151d4acc8808b8576cb8f9dd44cb2?pvs=21), Transformers (https://www.notion.so/Transformers-192151d4acc880d3901fc9e6b094fa4c?pvs=21), Transformers Reference (https://www.notion.so/Transformers-Reference-1b4151d4acc8807b8866d1602c33aa94?pvs=21)
 
 # Theory
 
